@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management Tasks</title>
+    <script src="https://suleymanovrn.onlyoffice.com/static/scripts/sdk/1.0.0/api.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            table-layout: fixed;
+            margin-bottom: 2rem;
+        }
+
+        th, td {
+            border: 1px solid #eee;
+            padding: 1rem;
+            text-align: left;
+        }
+
+        th:first-child { width: 30%; }
+        th:nth-child(2) { width: 55%; }
+        th:last-child, td:last-child {
+            width: 15%;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #444;
+        }
+
+        tr:hover { background-color: #f8f9fa; }
+
+        button {
+            padding: 0.5rem 1rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        button.create-task {
+            font-size: 1.1rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #28a745;
+        }
+
+        button.create-task:hover {
+            background-color: #218838;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            min-width: 500px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .popup h2 {
+            margin-bottom: 1.5rem;
+            color: #333;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .popup .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .popup .buttons button:last-child {
+            background-color: #6c757d;
+        }
+
+        .holder {
+            margin-top: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #ds-frame {
+            width: 100%;
+            min-height: 700px;
+            border: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translate(-50%, -60%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, -50%);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Testing Tasks</h1>
+    
+    <table id="tasksTable">
+        <thead>
+            <tr>
+                <th>Task Name</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <button onclick="showCreateTaskPopup()" class="create-task">Create Task</button>
+
+    <div class="overlay" id="overlay" onclick="hidePopup()"></div>
+    
+    <div class="popup" id="createTaskPopup">
+        <h2>Create New Task</h2>
+        <form id="createTaskForm" onsubmit="createTask(event)">
+            <div class="form-group">
+                <label for="taskName">Task Name</label>
+                <input type="text" id="taskName" required>
+            </div>
+            <div class="form-group">
+                <label for="taskDescription">Description</label>
+                <textarea id="taskDescription" required></textarea>
+            </div>
+            <div class="buttons">
+                <button type="submit">Create</button>
+                <button type="button" onclick="hidePopup()">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="popup" id="attachFilePopup">
+        <h2>Attach File</h2>
+        <input type="file" id="fileInput">
+        <button onclick="hidePopup()">Close</button>
+    </div>
+
+    <div id="holder-frame" class="holder" style="display: none;">
+        <div id="ds-frame"></div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let frame;
+
+        function onAppReady() {
+    frame = DocSpace.SDK.frames["ds-frame"];
+    console.log('DocSpace frame ready');
+}
+
+async function createTask(event) {
+    event.preventDefault();
+    
+    const taskName = document.getElementById('taskName').value;
+    const taskDescription = document.getElementById('taskDescription').value;
+    
+    try {
+        // Create DocSpace room
+        const roomResponse = await docSpace.createRoom(taskName, 2);
+        console.log('DocSpace room created:', roomResponse);
+        const task = {
+            id: Date.now(),
+            name: taskName,
+            description: taskDescription,
+            roomId: roomResponse.id
+        };
+        
+        tasks.push(task);
+        updateTasksTable();
+        hidePopup();
+        clearForm();
+        
+    } catch (error) {
+        console.error('Error creating task:', error);
+        alert('Failed to create task. Please try again.');
+    }
+}
+
+function updateTasksTable() {
+    const tbody = document.querySelector('#tasksTable tbody');
+    tbody.innerHTML = '';
+    
+    tasks.forEach(task => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${task.name}</td>
+            <td>${task.description}</td>
+            <td>
+                <button onclick="showAttachFilePopup('${task.id}')">Attach File</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function showCreateTaskPopup() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('createTaskPopup').style.display = 'block';
+}
+
+function showAttachFilePopup(taskId) {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('attachFilePopup').style.display = 'block';
+    document.getElementById('attachFilePopup').dataset.taskId = taskId;
+}
+
+function hidePopup() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('createTaskPopup').style.display = 'none';
+    document.getElementById('attachFilePopup').style.display = 'none';
+}
+
+function clearForm() {
+    document.getElementById('createTaskForm').reset();
+}
+
+// Initialize DocSpace SDK
+const config = {
+    events: {
+        onAppReady,
+    },
+    height: "700px",
+};
+
+const docSpace = DocSpace.SDK.initManager(config);
+
+</script>
+</body>
+</html>
